@@ -147,4 +147,20 @@ public class HexUtils {
         return dumpString(content);
     }
 
+    public static byte[] join(byte[]... array){
+        int len = 0;
+        for(byte[] a : array){
+            //logger.info("join: {}", a);
+            len += a.length;
+        }
+        byte[] out = new byte[len];
+        len = 0;
+        for(byte[] a : array){
+            System.arraycopy(a, 0, out, len, a.length);
+            len += a.length;
+        }
+        return out;
+    }
+
+
 }

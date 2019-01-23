@@ -84,7 +84,6 @@ public class ServerSSLContextFactory {
 
             ks.load(_pfxUrl.openStream(), _pfxPassword.toCharArray());
             kmf.init(ks, _pfxPassword.toCharArray());
-
             tks.load(_pfxUrl.openStream(), _pfxPassword.toCharArray());
             tmf.init(tks);
             SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
