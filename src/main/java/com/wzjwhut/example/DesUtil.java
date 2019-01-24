@@ -77,7 +77,6 @@ public class DesUtil {
 //    }
 
     public static byte[] encrypt_DES_EDE3_CBC(byte[] datasource, byte[] key, byte[] iv) throws Exception {
-            SecureRandom random = new SecureRandom();
             SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("DESede");
             SecretKey secretKey = keyFactory.generateSecret(new DESedeKeySpec(key));
             AlgorithmParameterSpec paramSpec = new IvParameterSpec(iv);

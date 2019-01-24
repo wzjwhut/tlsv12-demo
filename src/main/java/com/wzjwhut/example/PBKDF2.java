@@ -1,5 +1,6 @@
 package com.wzjwhut.example;
 
+import com.wzjwhut.util.DigestUtil;
 import com.wzjwhut.util.HexUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,10 +39,10 @@ public class PBKDF2 {
         s[length+1] = (byte)(i>>16);
         s[length+2] = (byte)(i>>8);
         s[length+3] = (byte)(i>>0);
-        byte[] preU = HmacSha1Util.hmacSha1(s, p); /** 注意参数的先后顺序 */
+        byte[] preU = DigestUtil.hmacsha1(s, p); /** 注意参数的先后顺序 */
         byte[] out = Arrays.copyOf(preU, preU.length);
         for(int x=1; x<c; x++){
-            byte[] u = HmacSha1Util.hmacSha1(preU, p);
+            byte[] u = DigestUtil.hmacsha1(preU, p);
             xor(out, u);
             preU = u;
         }

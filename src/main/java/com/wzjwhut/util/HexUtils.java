@@ -1,8 +1,10 @@
 package com.wzjwhut.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 
 public class HexUtils {
@@ -162,5 +164,37 @@ public class HexUtils {
         return out;
     }
 
+    /** */
+    public static byte[] fromHexString(String hexString){
+        String str = StringUtils.replaceAll(hexString, "[\t\r\n,]", " ");
+        String[] splits = StringUtils.split(str);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        for(String s : splits){
+            if(s.startsWith("0x") || s.startsWith("0X")){
+                s = s.substring(2);
+            }
+            for(int i=0; i<s.length(); i+=2){
+                if((i+1) <s.length()){
+                    int c0 = hexCharToInt(s.charAt(i));
+                    int c1 = hexCharToInt(s.charAt(i+1));
+                    bout.write((c0<<4) | c1);
+                }else{
+                    bout.write(hexCharToInt(s.charAt(i)));
+                }
+            }
+        }
+        return bout.toByteArray();
+    }
 
+    public static int hexCharToInt(char c){
+        if(c>='0' && c <='9'){
+            return c - '0';
+        }else if(c>='a' && c <='f'){
+            return c -'a' + 10;
+        }else if(c>='A' && c <='F'){
+            return c -'A' + 10;
+        }else{
+            return 0;
+        }
+    }
 }
