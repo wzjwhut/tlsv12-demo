@@ -8,6 +8,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESedeKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
@@ -35,6 +36,13 @@ public class CipherUtil {
         byte[] out = decoder.doFinal(cipherContent);
         //logger.info("[decrypt] input: \r\n{}, out:{}\r\n{}", HexUtils.dumpString(cipherContent),out.length,  HexUtils.dumpString(out));
         return out;
+    }
+
+    public static byte[] pbkdf2(char[] password, byte[] salt, int iterations, int bytes)
+            throws Throwable {
+        PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, bytes * 8);
+        SecretKeyFactory skf = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        return skf.generateSecret(spec).getEncoded();
     }
 
     public static void main(String[] args) throws Exception{

@@ -5,7 +5,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
-import java.util.Base64;
 import java.util.Random;
 
 /** 帮助分析抓包到的数据, 使用已知的证书/公钥/私钥 来分析握手过程
@@ -44,7 +43,7 @@ public class MyRSAInfo {
             "HfCzq5Bs1VcqTljreEzVQtGgu3XnhL4wITZ3iWh4rvhgVL+XeyR1na1gVn60ESKz" +
             "Z9E=";
 
-    public final static byte[] myPrivateKey = HexUtils.fromHexString(
+    public final static byte[] myEncryptedPrivateKey = HexUtils.fromHexString(
             "61 65 de 97 7e c5\n" +
             "ba 45 c6 f0 9f 4f d5 e4 d8 52 51 0f d4 a1 0e a7\n" +
             "cb b9 c4 f2 8c c3 95 69 56 6f 66 ad e9 e5 c2 7e\n" +
@@ -180,8 +179,8 @@ public class MyRSAInfo {
                 (byte)0xd6 , (byte)0xcd , (byte)0x24 , (byte)0x36 ,
                 (byte)0x11 , (byte)0x69 , (byte)0xb9 , (byte)0x76
         };
-        logger.info("private key len: {}", myPrivateKey.length);
-        byte[] out = DesUtil.decrypt_DES_EDE3_CBC(myPrivateKey, dk2, iv);
+        logger.info("private key len: {}", myEncryptedPrivateKey.length);
+        byte[] out = DesUtil.decrypt_DES_EDE3_CBC(myEncryptedPrivateKey, dk2, iv);
         logger.info("out = {}\r\n{}", out.length, HexUtils.dumpString(out, 16));
     }
 

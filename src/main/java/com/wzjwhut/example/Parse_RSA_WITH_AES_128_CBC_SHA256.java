@@ -12,8 +12,8 @@ import java.util.Arrays;
 /** 帮助分析抓包到的数据, TLS_RSA_WITH_AES_128_CBC_SHA256.pcapng
  * 先使用wireshark解析出基本参数
  * 使用已知的证书/公钥/私钥 来分析握手过程 */
-public class ParseRSA_WITH_AES_128_CBC_SHA256 {
-    private final static Logger logger = LogManager.getLogger(ParseRSA_WITH_AES_128_CBC_SHA256.class);
+public class Parse_RSA_WITH_AES_128_CBC_SHA256 {
+    private final static Logger logger = LogManager.getLogger(Parse_RSA_WITH_AES_128_CBC_SHA256.class);
 
     //random 由4字节的时间戳和28字节的随机数据组成. 共32字节
     public static final byte[] clientRandom = HexUtils.fromHexString(
@@ -303,7 +303,7 @@ public class ParseRSA_WITH_AES_128_CBC_SHA256 {
         byte[] masterSecret = computeMasterSecrete(premaster);
         logger.info("master key: \r\n{}", HexUtils.dumpString(masterSecret, 16));
         byte[] clientEncryptedHandshake = PRF(masterSecret, "client finished".getBytes(),
-                DigestUtil.sha256(clientAllHandshakeMessage), 12);
+                DigestUtil.sha256(clientAllHandshakeMessage), 48);
         logger.info("encrypted handshake: \r\n{}",
                 HexUtils.dumpString(clientEncryptedHandshake, 16));
         byte[] keyBlock = PRF(masterSecret, "key expansion".getBytes(),
@@ -315,8 +315,8 @@ public class ParseRSA_WITH_AES_128_CBC_SHA256 {
         byte[] serverKey = Arrays.copyOfRange(keyBlock, 64+16, 64+16+16);
 
         /** 解密 clientEncryptedHandshake */
-        byte[] iv = Arrays.copyOf(clientEncryptedAppData, 16);
-        byte[] content = Arrays.copyOfRange(clientEncryptedAppData, 16, clientEncryptedAppData.length);
+        byte[] iv = Arrays.copyOf(clientEncryptedHandShakeMessage, 16);
+        byte[] content = Arrays.copyOfRange(clientEncryptedHandShakeMessage, 16, clientEncryptedHandShakeMessage.length);
         logger.info("content: \r\n{}", HexUtils.dumpString(content, 16));
         byte[] decrypted = CipherUtil.cbcDecrypt(clientKey, iv, content);
         logger.info("decrypted: \r\n{}", HexUtils.dumpString(decrypted, 16));
