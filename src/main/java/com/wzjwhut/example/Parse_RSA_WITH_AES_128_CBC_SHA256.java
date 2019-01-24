@@ -233,7 +233,6 @@ public class Parse_RSA_WITH_AES_128_CBC_SHA256 {
     public static byte[] decryptPreMaster(){
         BigInteger premaster = new BigInteger(clientEncryptedPreMaster);
         byte[] out = premaster.modPow(MyRSAInfo.d, MyRSAInfo.n).toByteArray();
-        //logger.info("decrypted pre master: \r\n{}", HexUtils.dumpString(out, 16));
         return Arrays.copyOfRange(out, out.length-48, out.length);
     }
 
@@ -259,7 +258,7 @@ public class Parse_RSA_WITH_AES_128_CBC_SHA256 {
      master_secret固定48字节
      PRF为伪随机数算法, TLS v1.2使用SHA-256
      */
-    public static byte[] computeMasterSecrete(byte[] premaster) throws Exception{
+    public static byte[] computeMasterSecret(byte[] premaster) throws Exception{
         return PRF(premaster,
                 "master secret".getBytes(),
                 HexUtils.join(clientRandom , serverRandom), 48);
@@ -300,27 +299,49 @@ public class Parse_RSA_WITH_AES_128_CBC_SHA256 {
     public static void main(String[] arsg) throws Exception{
         byte[] premaster = decryptPreMaster();
         logger.info("decrypted pre master: \r\n{}", HexUtils.dumpString(premaster, 16));
-        byte[] masterSecret = computeMasterSecrete(premaster);
+        byte[] masterSecret = computeMasterSecret(premaster);
         logger.info("master key: \r\n{}", HexUtils.dumpString(masterSecret, 16));
-        byte[] clientEncryptedHandshake = PRF(masterSecret, "client finished".getBytes(),
-                DigestUtil.sha256(clientAllHandshakeMessage), 48);
-        logger.info("encrypted handshake: \r\n{}",
-                HexUtils.dumpString(clientEncryptedHandshake, 16));
+
+
         byte[] keyBlock = PRF(masterSecret, "key expansion".getBytes(),
                 HexUtils.join(serverRandom, clientRandom), 96);
+        logger.info("keyblock: \r\n{}", HexUtils.dumpString(keyBlock, 16));
 
         byte[] clientMacKey = Arrays.copyOfRange(keyBlock, 0, 32);
         byte[] serverMacKey = Arrays.copyOfRange(keyBlock, 32, 64);
-        byte[] clientKey = Arrays.copyOfRange(keyBlock, 64, 64+16);
-        byte[] serverKey = Arrays.copyOfRange(keyBlock, 64+16, 64+16+16);
+        byte[] clientAESKey = Arrays.copyOfRange(keyBlock, 64, 64+16);
+        byte[] serverAESKey = Arrays.copyOfRange(keyBlock, 64+16, 64+16+16);
+
+        {
+            byte[] computedClientEncryptedHandshake = PRF(masterSecret, "client finished".getBytes(),
+                    DigestUtil.sha256(clientAllHandshakeMessage), 12);
+            logger.info("encrypted handshake: \r\n{}",
+                    HexUtils.dumpString(computedClientEncryptedHandshake, 16));
+        }
+        {
+            byte[] mac = DigestUtil.hmacsha256(HexUtils.join(
+                    new byte[]{0,0,0,0,0,0,0,0, 22, 3, 3, 0, 16},
+                    HexUtils.fromHexString("14 00 00 0c cc 4d 39 01 b6 55 af cd 8d b7 e5 c3")
+                    ),
+                    clientMacKey);
+            logger.info("clientEncryptedHandshake mac: \r\n{}", HexUtils.dumpString(mac, 16));
+        }
 
         /** 解密 clientEncryptedHandshake */
-        byte[] iv = Arrays.copyOf(clientEncryptedHandShakeMessage, 16);
-        byte[] content = Arrays.copyOfRange(clientEncryptedHandShakeMessage, 16, clientEncryptedHandShakeMessage.length);
-        logger.info("content: \r\n{}", HexUtils.dumpString(content, 16));
-        byte[] decrypted = CipherUtil.cbcDecrypt(clientKey, iv, content);
-        logger.info("decrypted: \r\n{}", HexUtils.dumpString(decrypted, 16));
-        logger.info("decrypted: \r\n{}", new String(decrypted));
+        {
+            byte[] iv = Arrays.copyOf(clientEncryptedHandShakeMessage, 16);
+            byte[] content = Arrays.copyOfRange(clientEncryptedHandShakeMessage, 16, clientEncryptedHandShakeMessage.length);
+            byte[] decrypted = CipherUtil.cbcDecrypt(clientAESKey, iv, content);
+            logger.info("decrypted handshake msg: \r\n{}", HexUtils.dumpString(decrypted, 16));
+        }
 
+
+        {
+            byte[] iv = Arrays.copyOf(clientEncryptedAppData, 16);
+            byte[] content = Arrays.copyOfRange(clientEncryptedAppData, 16, clientEncryptedAppData.length);
+            byte[] decrypted = CipherUtil.cbcDecrypt(clientAESKey, iv, content);
+            logger.info("decrypted application msg: \r\n{}", HexUtils.dumpString(decrypted, 16));
+            logger.info("decrypted: \r\n{}", new String(decrypted));
+        }
     }
 }
