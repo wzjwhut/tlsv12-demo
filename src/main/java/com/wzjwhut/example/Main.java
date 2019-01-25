@@ -16,14 +16,14 @@ public class Main {
     private final static byte[] rawMessage = "hello world".getBytes();
 
     private static String createRequest(String host){
-        return   String.format("GET / HTTP/1.1\r\n" +
+        return   String.format("GET https://%s/ HTTP/1.1\r\n" +
                 "Host: %s\r\n" +
                 "Accept: text/html\r\n" +
                 "Accept-Encoding: gzip, deflate\r\n" +
                 "Connection: keep-alive\r\n" +
                 "Upgrade-Insecure-Requests: 1\r\n" +
                 "Content-Length: 0\r\n" +
-                "\r\n", host);
+                "\r\n", host, host);
     }
 
     public static void main(String[] args) throws Throwable {
@@ -47,10 +47,10 @@ public class Main {
         socket.setNeedClientAuth(true);
         socket.setEnabledCipherSuites(new String[]{
                 /** 最简单的方式 */
-                "TLS_RSA_WITH_AES_128_CBC_SHA256",
+                //"TLS_RSA_WITH_AES_128_CBC_SHA256",
 
                 /** 支持前向安全特性 */
-                //"TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+                "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
         });
         socket.getOutputStream().write(createRequest(host).getBytes());
         byte[] resp = new byte[4096];

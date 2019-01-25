@@ -12,8 +12,8 @@ import java.util.Arrays;
 /** 帮助分析抓包到的数据, TLS_RSA_WITH_AES_128_CBC_SHA256.pcapng
  * 先使用wireshark解析出基本参数
  * 使用已知的证书/公钥/私钥 来分析握手过程 */
-public class Parse_RSA_WITH_AES_128_CBC_SHA256 {
-    private final static Logger logger = LogManager.getLogger(Parse_RSA_WITH_AES_128_CBC_SHA256.class);
+public class Analyse_RSA_WITH_AES_128_CBC_SHA256 {
+    private final static Logger logger = LogManager.getLogger(Analyse_RSA_WITH_AES_128_CBC_SHA256.class);
 
     //random 由4字节的时间戳和28字节的随机数据组成. 共32字节
     public static final byte[] clientRandom = HexUtils.fromHexString(
