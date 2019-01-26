@@ -32,13 +32,13 @@ public class Analyse_ECDHE_RSA_WITH_AES_128_CBC_SHA256 {
 
     static BigInteger serverPublicKeyX = new BigInteger(HexUtils.fromHexString(
             "3d 0f 6c 38 35 8e 0b 5b 1e 3b 2c 2b 0e d5 b7\n" +
-                    "1d f5 8d d3 51 f8 2d 80 b8 f4 4c b9 12 5d 33 36\n" +
-                    "26 "));
+            "1d f5 8d d3 51 f8 2d 80 b8 f4 4c b9 12 5d 33 36\n" +
+            "26 "));
     static BigInteger serverPublicKeyY = new BigInteger(HexUtils.fromHexString(
             "00" +
             "fb b1 d5 b9 55 ce 8c 3c 34 f0 7b 9a 48 2c 5a\n" +
-                    "3c 89 4b dd 04 56 63 08 71 34 a5 7a 83 a7 83 1e\n" +
-                    "2b"));
+            "3c 89 4b dd 04 56 63 08 71 34 a5 7a 83 a7 83 1e\n" +
+            "2b"));
 
     static byte[] clientEncryptedAppData = HexUtils.fromHexString(
             "83 b4 75 be 10 5f 5f 25 66 07 fa 06 aa 2d 68 58\n" +
@@ -46,7 +46,6 @@ public class Analyse_ECDHE_RSA_WITH_AES_128_CBC_SHA256 {
             "3e ff 7c 23 15 5c b4 37 c7 0e 43 27 b2 cc c4 9c\n" +
             "63 54 5b 71 a8 b2 79 75 b8 bd 0a c2 14 72 72 88");
 
-    /** 使用DH算法, 计算出pre master */
     public static byte[] computePreMaster() throws Exception{
         /** ecdh计算太复杂了, 直接系统接口吧 */
         byte[] sharedKey = CipherUtil.ecdhShareKey(clientPrivateKey, serverPublicKeyX, serverPublicKeyY);
