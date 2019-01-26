@@ -50,7 +50,7 @@ public class Main {
                 //"TLS_RSA_WITH_AES_128_CBC_SHA256",
 
                 /** 支持前向安全特性 */
-                "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
+                "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256",
         });
         socket.getOutputStream().write(createRequest(host).getBytes());
         byte[] resp = new byte[4096];

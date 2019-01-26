@@ -24,7 +24,6 @@ public class Analyse_DHE_RSA_WITH_AES_128_CBC_SHA256 {
             "5c 4a b2 c7 3d d5 c1 16 52 e7 48 ea 79 d4 3e 7e\n" +
             "8c 81 21 37 82 4a 8d 0b cf a7 e1 16 7c bf e8 0e\n");
 
-    /** 解密之后的最后48字节才是pre master. 原因不明 */
     public static final BigInteger DH_P = new BigInteger(HexUtils.fromHexString(
             "00 " + //为了保证BigInteger按照正数解析, 第1个字节必须为0
             "ff ff ff ff ff ff ff ff c9 0f da a2 21 68 c2 34\n" +
