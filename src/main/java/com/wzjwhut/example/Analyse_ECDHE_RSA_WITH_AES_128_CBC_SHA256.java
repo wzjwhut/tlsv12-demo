@@ -47,12 +47,12 @@ public class Analyse_ECDHE_RSA_WITH_AES_128_CBC_SHA256 {
             "63 54 5b 71 a8 b2 79 75 b8 bd 0a c2 14 72 72 88");
 
     public static byte[] computePreMaster() throws Exception{
-        /** ecdh计算太复杂了, 直接系统接口吧 */
+        /** 方法1: 直接系统接口 */
         byte[] sharedKey = CipherUtil.ecdhShareKey(clientPrivateKey, serverPublicKeyX, serverPublicKeyY);
         logger.info("system shared key: \r\n{}", HexUtils.dumpString(sharedKey, 16));
 //        return sharedKey;
 
-        /** 使用开源库计算. 使用对方的Point乘上自己的私钥 */
+        /** 方法2: 使用开源库计算. 使用对方的Point乘上自己的私钥 */
         byte[] myKey = ECCP256R1l.multi(serverPublicKeyX, serverPublicKeyY, clientPrivateKey);
         logger.info("my shared key: \r\n{}", HexUtils.dumpString(myKey, 16));
         return myKey;
