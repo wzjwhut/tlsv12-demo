@@ -1,9 +1,12 @@
 package com.wzjwhut.util;
 
+import com.sun.crypto.provider.DHKeyPairGenerator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.security.ec.ECKeyPairGenerator;
 import sun.security.ec.ECPrivateKeyImpl;
 import sun.security.ec.ECPublicKeyImpl;
+import sun.security.rsa.RSAKeyPairGenerator;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
@@ -28,6 +31,8 @@ import java.util.Random;
 
 public class CipherUtil {
     private final static Logger logger = LogManager.getLogger(CipherUtil.class);
+
+    private final static SecureRandom RANDOM = new SecureRandom();
 
     public static byte[] cbcEncrypt(byte[] key, byte[] iv, byte[] input) throws Exception {
         key = Arrays.copyOf(key, 16);
@@ -58,24 +63,28 @@ public class CipherUtil {
         return skf.generateSecret(spec).getEncoded();
     }
 
-    public static KeyPair genECCKeyPair() throws Exception{
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+    public static KeyPair genECCKeyPair() throws Throwable {
+        //KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
+        ECKeyPairGenerator keyPairGenerator = new ECKeyPairGenerator();
         ECGenParameterSpec spec = new ECGenParameterSpec("secp256r1");
         keyPairGenerator.initialize(spec, new SecureRandom());
         KeyPair pair = keyPairGenerator.generateKeyPair();
         return pair;
     }
 
-    public static KeyPair genDHKeyPair() throws Exception{
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("DH");
-        keyPairGenerator.initialize(1024);
-        KeyPair pair = keyPairGenerator.generateKeyPair();
+    public static KeyPair genDHKeyPair() throws Exception {
+        //KeyPairGenerator keyPairGeneator = KeyPairGenerator.getInstance("DH");
+        //keyPairGeneator.initialize(1024);
+        DHKeyPairGenerator keyPairGeneator = new DHKeyPairGenerator();
+        keyPairGeneator.initialize(1024, RANDOM);
+        KeyPair pair = keyPairGeneator.generateKeyPair();
         return pair;
     }
 
-    public static KeyPair genRSAKeyPair() throws Exception{
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
+    public static KeyPair genRSAKeyPair() throws Exception {
+        //KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        RSAKeyPairGenerator keyPairGenerator = new RSAKeyPairGenerator();
+        keyPairGenerator.initialize(2048, RANDOM);
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         return keyPair;
     }
@@ -85,13 +94,14 @@ public class CipherUtil {
         parameters.init(new ECGenParameterSpec(name));
         return parameters.getParameterSpec(ECParameterSpec.class);
     }
-    public static void buildECPublicKey(BigInteger x, BigInteger y) throws Exception{
+
+    public static void buildECPublicKey(BigInteger x, BigInteger y) throws Exception {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC");
         ECPublicKeyImpl publicKey = new ECPublicKeyImpl(new ECPoint(x, y), getECParameterSpec("secp256r1"));
         logger.info("ec pubic key: {}", publicKey);
     }
 
-    public static byte[] ecdhShareKey(BigInteger k, BigInteger publicKeyPointX, BigInteger publicKeyPointY) throws Exception{
+    public static byte[] ecdhShareKey(BigInteger k, BigInteger publicKeyPointX, BigInteger publicKeyPointY) throws Exception {
         KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
         logger.info("key agreement: {}", keyAgreement.getClass());
         ECParameterSpec ecparams = getECParameterSpec("secp256r1");
@@ -102,49 +112,54 @@ public class CipherUtil {
         return keyAgreement.generateSecret();
     }
 
-    public static void main(String[] args) throws Exception{
-//        {
-//            KeyPair clientECKeyPair = genECCKeyPair();
-//            long time = System.currentTimeMillis();
-//            for (int i = 0; i < 1 * 10000; i++) {
-//                KeyPair serverECKeyPair = genECCKeyPair();
-//                KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
-//                keyAgreement.init(serverECKeyPair.getPrivate());
-//                keyAgreement.doPhase(clientECKeyPair.getPublic(), true);
-//                keyAgreement.generateSecret();
-//            }
-//            logger.info("time: {}", System.currentTimeMillis() - time);
-//        }
-//        {
-//            KeyPair clientKeyPair = genDHKeyPair();
-//            long time = System.currentTimeMillis();
-//            for (int i = 0; i < 1 * 10000; i++) {
-//                KeyPair serverKeyPair = genDHKeyPair();
-//                KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
-//                keyAgreement.init(serverKeyPair.getPrivate());
-//                keyAgreement.doPhase(clientKeyPair.getPublic(), true);
-//                keyAgreement.generateSecret();
-//            }
-//            logger.info("time: {}", System.currentTimeMillis() - time);
-//        }
-
-        {
-            KeyPair serverKeyPair = genRSAKeyPair();
-            Random r = new Random();
-            byte[] preMaster = new byte[48];
-            r.nextBytes(preMaster);
-            Cipher encoder = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-            encoder.init(Cipher.ENCRYPT_MODE, serverKeyPair.getPublic());
-            encoder.update(preMaster);
-            byte[] encryptedPreMaster = encoder.doFinal();
-            long time = System.currentTimeMillis();
-            for (int i = 0; i < 1 * 10000; i++) {
-                Cipher decryptor = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-                decryptor.init(Cipher.DECRYPT_MODE, serverKeyPair.getPublic());
-                decryptor.update(encryptedPreMaster);
-            }
-            logger.info("time: {}", System.currentTimeMillis() - time);
+    public static void DHPerformance() throws Throwable {
+        KeyPair clientKeyPair = genDHKeyPair();
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 10000; i++) {
+            KeyPair serverKeyPair = genDHKeyPair();
+            KeyAgreement keyAgreement = KeyAgreement.getInstance("DH");
+            keyAgreement.init(serverKeyPair.getPrivate());
+            keyAgreement.doPhase(clientKeyPair.getPublic(), true);
+            keyAgreement.generateSecret();
         }
+        logger.info("time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void RSAPerformance() throws Throwable {
+        KeyPair serverKeyPair = genRSAKeyPair();
+        Random r = new Random();
+        byte[] preMaster = new byte[48];
+        r.nextBytes(preMaster);
+        Cipher encoder = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+        encoder.init(Cipher.ENCRYPT_MODE, serverKeyPair.getPublic());
+        encoder.update(preMaster);
+        byte[] encryptedPreMaster = encoder.doFinal();
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 10000; i++) {
+            Cipher decryptor = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            decryptor.init(Cipher.DECRYPT_MODE, serverKeyPair.getPublic());
+            decryptor.update(encryptedPreMaster);
+        }
+        logger.info("time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void ECDHEPerformance() throws Throwable {
+        KeyPair clientPair = genECCKeyPair();
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 10000; i++) {
+            KeyPair serverPair = genECCKeyPair();
+            KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
+            keyAgreement.init(serverPair.getPrivate());
+            keyAgreement.doPhase(clientPair.getPublic(), true);
+            keyAgreement.generateSecret();
+        }
+        logger.info("time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void main(String[] args) throws Throwable {
+        //DHPerformance();
+        //ECDHEPerformance();
+        RSAPerformance();
     }
 
 }
