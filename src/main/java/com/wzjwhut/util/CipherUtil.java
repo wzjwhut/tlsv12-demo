@@ -10,15 +10,12 @@ import sun.security.rsa.RSAKeyPairGenerator;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyAgreement;
-import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DHGenParameterSpec;
-import javax.crypto.spec.DHParameterSpec;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigInteger;
-import java.security.AlgorithmParameterGenerator;
 import java.security.AlgorithmParameters;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -34,10 +31,83 @@ public class CipherUtil {
 
     private final static SecureRandom RANDOM = new SecureRandom();
 
+
+    public static byte[] DESEncrypt(byte[] key, byte[] iv, byte[] input) throws Exception {
+        if(key.length != 24) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(input.length<16) {
+            input = Arrays.copyOf(input, 16);
+        }
+        if(iv.length != 8) {
+            iv = Arrays.copyOf(iv, 8);
+        }
+        SecretKeySpec secretKey = new SecretKeySpec(key, "DESede");
+        Cipher cipher = Cipher.getInstance("DESede/CBC/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
+        byte[] result = cipher.doFinal(input);
+        return result;
+    }
+
+    public static byte[] DESDecrypt(byte[] key, byte[] iv, byte[] cipherContent) throws Exception {
+        if(key.length != 24) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(iv.length != 8) {
+            iv = Arrays.copyOf(iv, 8);
+        }
+        SecretKeySpec keySpec = new SecretKeySpec(key, "DESede");
+        Cipher decoder = Cipher.getInstance("DESede/CBC/NoPadding");
+        decoder.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(iv));
+        byte[] out = decoder.doFinal(cipherContent);
+        //logger.info("[decrypt] input: \r\n{}, out:{}\r\n{}", HexUtils.dumpString(cipherContent),out.length,  HexUtils.dumpString(out));
+        return out;
+    }
+
+
+    public static byte[] aesGCMEncrypt(byte[] key, byte[] iv, byte[] input) throws Exception {
+        if(key.length != 16) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(input.length != 16) {
+            input = Arrays.copyOf(input, 16);
+        }
+        if(iv.length != 16) {
+            iv = Arrays.copyOf(iv, 16);
+        }
+        SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
+        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(16 * Byte.SIZE, iv));
+        byte[] result = cipher.doFinal(input);
+        return result;
+    }
+
+    public static byte[] aesGCMDecrypt(byte[] key, byte[] iv, byte[] cipherContent) throws Exception {
+        if(key.length != 16) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(iv.length != 16) {
+            iv = Arrays.copyOf(iv, 16);
+        }
+        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+        Cipher decoder = Cipher.getInstance("AES/GCM/NoPadding");
+        decoder.init(Cipher.DECRYPT_MODE, keySpec, new GCMParameterSpec(16 * Byte.SIZE, iv));
+        byte[] out = decoder.doFinal(cipherContent);
+        //logger.info("[decrypt] input: \r\n{}, out:{}\r\n{}", HexUtils.dumpString(cipherContent),out.length,  HexUtils.dumpString(out));
+        return out;
+    }
+
+
     public static byte[] cbcEncrypt(byte[] key, byte[] iv, byte[] input) throws Exception {
-        key = Arrays.copyOf(key, 16);
-        input = Arrays.copyOf(input, 16);
-        iv = Arrays.copyOf(iv, 16);
+        if(key.length!=16) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(input.length!=16) {
+            input = Arrays.copyOf(input, 16);
+        }
+        if(iv.length!=16) {
+            iv = Arrays.copyOf(iv, 16);
+        }
         SecretKeySpec secretKey = new SecretKeySpec(key, "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(iv));
@@ -46,8 +116,12 @@ public class CipherUtil {
     }
 
     public static byte[] cbcDecrypt(byte[] key, byte[] iv, byte[] cipherContent) throws Exception {
-        key = Arrays.copyOf(key, 16);
-        iv = Arrays.copyOf(iv, 16);
+        if(key.length != 16) {
+            key = Arrays.copyOf(key, 16);
+        }
+        if(iv.length != 16) {
+            iv = Arrays.copyOf(iv, 16);
+        }
         SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
         Cipher decoder = Cipher.getInstance("AES/CBC/NoPadding");
         decoder.init(Cipher.DECRYPT_MODE, keySpec, new IvParameterSpec(iv));
@@ -112,7 +186,7 @@ public class CipherUtil {
         return keyAgreement.generateSecret();
     }
 
-    public static void DHPerformance() throws Throwable {
+    public static void DHEPerformance() throws Throwable {
         KeyPair clientKeyPair = genDHKeyPair();
         long time = System.currentTimeMillis();
         for (int i = 0; i < 1 * 10000; i++) {
@@ -122,7 +196,7 @@ public class CipherUtil {
             keyAgreement.doPhase(clientKeyPair.getPublic(), true);
             keyAgreement.generateSecret();
         }
-        logger.info("time: {}", System.currentTimeMillis() - time);
+        logger.info("[DHE] time: {}", System.currentTimeMillis() - time);
     }
 
     public static void RSAPerformance() throws Throwable {
@@ -140,7 +214,7 @@ public class CipherUtil {
             decryptor.init(Cipher.DECRYPT_MODE, serverKeyPair.getPublic());
             decryptor.update(encryptedPreMaster);
         }
-        logger.info("time: {}", System.currentTimeMillis() - time);
+        logger.info("[RSA] time: {}", System.currentTimeMillis() - time);
     }
 
     public static void ECDHEPerformance() throws Throwable {
@@ -153,13 +227,107 @@ public class CipherUtil {
             keyAgreement.doPhase(clientPair.getPublic(), true);
             keyAgreement.generateSecret();
         }
-        logger.info("time: {}", System.currentTimeMillis() - time);
+        logger.info("[ECDHE] time: {}", System.currentTimeMillis() - time);
     }
 
+    public static void ECDHPerformance() throws Throwable {
+        KeyPair clientPair = genECCKeyPair();
+        long time = System.currentTimeMillis();
+        KeyPair serverPair = genECCKeyPair();
+        KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH");
+        keyAgreement.init(serverPair.getPrivate());
+        keyAgreement.doPhase(clientPair.getPublic(), true);
+        for (int i = 0; i < 1 * 10000; i++) {
+            keyAgreement.generateSecret();
+        }
+        logger.info("[ECDH] time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void aesGCMPerformance() throws Throwable {
+        byte[] key = new byte[16];
+        byte[] input = new byte[16];
+        byte[] iv = new byte[16];
+        for(byte i=0; i<16; i++){
+            key[i] = i;
+            input[i] = i;
+            iv[i] = i;
+        }
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 100000; i++) {
+            byte[] out = aesGCMEncrypt(key, iv, input);
+            aesGCMDecrypt(key, iv, out);
+        }
+        logger.info("[AES GCM] time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void aesCBCPerformance() throws Throwable {
+        byte[] key = new byte[16];
+        byte[] input = new byte[16];
+        byte[] iv = new byte[16];
+        for(byte i=0; i<16; i++){
+            key[i] = i;
+            input[i] = i;
+            iv[i] = i;
+        }
+
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 100000; i++) {
+            byte[] out = cbcEncrypt(key, iv, input);
+            cbcDecrypt(key, iv, out);
+        }
+        logger.info("[AES CBC] time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void DESPerformance() throws Throwable {
+        byte[] key = new byte[24];
+        byte[] input = new byte[16];
+        byte[] iv = new byte[16];
+        for(byte i=0; i<16; i++){
+            key[i] = i;
+            input[i] = i;
+            iv[i] = i;
+        }
+        iv = Arrays.copyOf(iv, 8);
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 100000; i++) {
+            byte[] out = DESEncrypt(key, iv, input);
+            DESDecrypt(key, iv, out);
+        }
+        logger.info("[DES CBC] time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void hmacSha256Performance() throws Throwable{
+        byte[] key = new byte[48];
+        byte[] input = new byte[128];
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 100000; i++) {
+            DigestUtil.hmacsha256(input, key);
+        }
+        logger.info("[hmacSha256] time: {}", System.currentTimeMillis() - time);
+    }
+
+    public static void hmacShaPerformance() throws Throwable{
+        byte[] key = new byte[48];
+        byte[] input = new byte[128];
+        long time = System.currentTimeMillis();
+        for (int i = 0; i < 1 * 100000; i++) {
+            DigestUtil.hmacsha1(input, key);
+        }
+        logger.info("[hmacSha1] time: {}", System.currentTimeMillis() - time);
+    }
+
+
     public static void main(String[] args) throws Throwable {
-        //DHPerformance();
-        //ECDHEPerformance();
-        RSAPerformance();
+//        DHEPerformance();
+//        ECDHEPerformance();
+//        ECDHPerformance();
+//        RSAPerformance();
+        aesGCMPerformance();
+        aesCBCPerformance();
+        DESPerformance();
+
+        hmacSha256Performance();
+        hmacShaPerformance();
     }
 
 }
